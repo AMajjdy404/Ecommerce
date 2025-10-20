@@ -23,7 +23,7 @@ namespace Catalog.Infrastructure.Data.Context
             var database = client.GetDatabase(configuration["DatabaseSettings:DatabaseName"]);
 
             Brands = database.GetCollection<ProductBrand>(configuration["DatabaseSettings:BrandsCollection"]);
-            Types = database.GetCollection<ProductType>(configuration["DatabaseSettings:TypsCollection"]);
+            Types = database.GetCollection<ProductType>(configuration["DatabaseSettings:TypesCollection"]);
             Products = database.GetCollection<Product>(configuration["DatabaseSettings:ProductsCollection"]);
 
             _ =  BrandContextSeed.SeedAsync(Brands);
