@@ -1,9 +1,11 @@
 using System.Reflection;
 using Catalog.Application.Mappers;
 using Catalog.Application.Queries;
+using Catalog.Core.Entities;
 using Catalog.Core.Repositories;
 using Catalog.Infrastructure.Data.Context;
 using Catalog.Infrastructure.Repositories;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,7 +51,28 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
 var app = builder.Build();
+
+// Data Seeding
+using var scope = app.Services.CreateScope();
+var context = scope.ServiceProvider.GetRequiredService<ICatalogContext>();
+var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+try
+{
+    logger.LogInformation("Starting database seeding...");
+
+    await CatalogContextSeed.SeedAsync(context.Products);
+    await BrandContextSeed.SeedAsync(context.Brands);
+    await TypeContextSeed.SeedAsync(context.Types);
+
+    logger.LogInformation("===== DATABASE SEEDING COMPLETED SUCCESSFULLY =====");
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "An error occurred while seeding the database.");
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

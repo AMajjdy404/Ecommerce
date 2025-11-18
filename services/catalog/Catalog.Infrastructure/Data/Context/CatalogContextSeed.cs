@@ -13,20 +13,35 @@ namespace Catalog.Infrastructure.Data.Context
     {
         public static async Task SeedAsync(IMongoCollection<Product> productCollection)
         {
-            var hasProducts = await productCollection.Find(_ => true).AnyAsync();
-            if (hasProducts)
-                return;
-            var filePath = Path.Combine("Data", "DataSeed", "products.js");
+            var filePath = Path.Combine(AppContext.BaseDirectory, "products.json");
             if (!File.Exists(filePath))
             {
                 Console.WriteLine($"this File Seed is Not Exist : {filePath}");
                 return;
             }
-            var productData = await File.ReadAllTextAsync(filePath);
-            var products = JsonSerializer.Deserialize<List<Product>>(productData);
-            if (products?.Any() == true)
-                await productCollection.InsertManyAsync(products);
 
+            var productData = await File.ReadAllTextAsync(filePath);
+            var products = JsonSerializer.Deserialize<List<Product>>(productData, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (products == null || !products.Any()) return;
+
+            var bulkOps = new List<WriteModel<Product>>();
+
+            foreach (var product in products)
+            {
+                var filter = Builders<Product>.Filter.Eq(x => x.Id, product.Id);
+                var update = Builders<Product>.Update
+                    .SetOnInsert(x => x.Id, product.Id); // عشان يحط الـ Id لو جديد
+
+                var upsert = new ReplaceOneModel<Product>(filter, product) { IsUpsert = true };
+                bulkOps.Add(upsert);
+            }
+
+            await productCollection.BulkWriteAsync(bulkOps);
+            Console.WriteLine($"Seeded/Upserted {products.Count} products successfully.");
         }
     }
 }

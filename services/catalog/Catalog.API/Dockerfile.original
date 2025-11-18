@@ -13,9 +13,9 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["services/catalog/Catalog.API/Catalog.API.csproj", "services/catalog/Catalog.API/"]
 COPY ["services/catalog/Catalog.Application/Catalog.Application.csproj", "services/catalog/Catalog.Application/"]
-COPY ["services/catalog/Catalog.Core/Catalog.Core.csproj", "services/catalog/Catalog.Core/"]
 COPY ["services/catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj", "services/catalog/Catalog.Infrastructure/"]
-COPY services/catalog/Catalog.Infrastructure/Data/DataSeed /src/services/catalog/Catalog.Infrastructure/Data/DataSeed
+COPY ["services/catalog/Catalog.Core/Catalog.Core.csproj", "services/catalog/Catalog.Core/"]
+COPY services/catalog/Catalog.Infrastructure/Data/DataSeed /src/catalog/Catalog.Infrastructure/Data/DataSeed
 RUN dotnet restore "./services/catalog/Catalog.API/Catalog.API.csproj"
 COPY . .
 WORKDIR "/src/services/catalog/Catalog.API"
@@ -29,6 +29,5 @@ RUN dotnet publish "./Catalog.API.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
-COPY --from=build /src/services/catalog/Catalog.Infrastructure/Data/DataSeed/ /app/
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Catalog.API.dll"]
